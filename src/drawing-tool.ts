@@ -19,7 +19,7 @@ import {
 import { DEFAULT_SETTINGS } from './constants';
 import { API, BlockToolConstructorOptions } from '@editorjs/editorjs';
 
-export class KonvaDrawingTool {
+export class DrawingTool {
   private api: API;
   private wrapper: HTMLDivElement;
   private container: HTMLDivElement;

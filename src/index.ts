@@ -1,4 +1,4 @@
-import { KonvaDrawingTool } from './drawing-tool';
+import { DrawingTool } from './drawing-tool';
 import { IconMarker } from '@codexteam/icons';
 
 export type {
@@ -28,7 +28,7 @@ export type {
 } from './types/types';
 
 export default {
-  class: KonvaDrawingTool,
+  class: DrawingTool,
   isInline: false,
   toolbox: {
     title: 'Drawing',
