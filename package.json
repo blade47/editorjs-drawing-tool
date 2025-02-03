@@ -1,0 +1,58 @@
+{
+  "name": "@blade47/drawing-tool",
+  "version": "1.0.0",
+  "keywords": [
+    "codex editor",
+    "drawing-tool",
+    "editor.js",
+    "editorjs"
+  ],
+  "description": "Drawing Tool for Editor.js",
+  "license": "MIT",
+  "repository": "",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/drawing-tool.umd.js",
+  "module": "./dist/drawing-tool.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/drawing-tool.mjs",
+      "require": "./dist/drawing-tool.umd.js"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "yarn lint:fix && yarn prettier && vite build",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
+    "lint:fix": "eslint --fix \"src/**/*.{js,jsx,ts,tsx}\"",
+    "prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\""
+  },
+  "author": {
+    "name": "Alessandro Afloarei"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
+    "install": "^0.13.0",
+    "npm": "^11.1.0",
+    "vite": "^4.5.0",
+    "vite-plugin-css-injected-by-js": "^3.3.0"
+  },
+  "dependencies": {
+    "@codexteam/icons": "^0.3.3",
+    "@editorjs/editorjs": "^2.30.8",
+    "@types/debounce": "^1.2.4",
+    "debounce": "^2.2.0",
+    "eslint": "^8.44.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-perfectionist": "^2.11.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "eslint-plugin-unused-imports": "^4.0.0",
+    "konva": "^9.3.18",
+    "prettier": "^3.3.2",
+    "typescript": "^5.7.3",
+    "uuid": "^11.0.5"
+  }
+}
