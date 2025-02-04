@@ -2,12 +2,8 @@ import Konva from 'konva';
 import { BaseModule } from './base-module';
 import { ModuleOptions, EventCallbacks } from '../types/types';
 import { KEYS } from '../constants';
-import debounce from 'debounce';
 
 export class EventManager extends BaseModule {
-  private resizeObserver: ResizeObserver | null = null;
-  private readonly RESIZE_DEBOUNCE_TIME = 250;
-
   constructor(options: ModuleOptions, callbacks: EventCallbacks = {}) {
     super(options, callbacks);
     this.initializeEvents();
@@ -19,7 +15,6 @@ export class EventManager extends BaseModule {
     this.attachStageEvents();
     this.attachLayerEvents();
     this.attachWindowEvents();
-    this.setupResizeObserver();
   }
 
   private attachStageEvents(): void {
@@ -98,21 +93,7 @@ export class EventManager extends BaseModule {
 
   private attachWindowEvents(): void {
     window.addEventListener('keydown', this.handleKeyDown);
-    window.addEventListener('resize', this.handleWindowResize);
     window.addEventListener('paste', this.handlePaste);
-  }
-
-  private setupResizeObserver(): void {
-    this.resizeObserver = new ResizeObserver(
-      debounce(() => {
-        this.handleContainerResize();
-      }, this.RESIZE_DEBOUNCE_TIME)
-    );
-
-    const container = this.stage?.container();
-    if (container) {
-      this.resizeObserver.observe(container);
-    }
   }
 
   private handleStageClick(): void {
@@ -183,35 +164,6 @@ export class EventManager extends BaseModule {
     }
   };
 
-  private handleWindowResize = debounce(() => {
-    if (!this.stage || !this.layer) return;
-
-    const container = this.stage.container();
-    if (container) {
-      this.stage.width(container.offsetWidth);
-      this.layer.batchDraw();
-    }
-  }, this.RESIZE_DEBOUNCE_TIME);
-
-  private handleContainerResize = (): void => {
-    if (!this.stage || !this.layer) return;
-
-    const container = this.stage.container();
-    if (container) {
-      const containerWidth = container.offsetWidth;
-
-      this.stage.width(containerWidth);
-
-      const stageWidth = this.stage.width();
-      if (stageWidth !== containerWidth) {
-        const scale = containerWidth / stageWidth;
-        this.layer.scale({ x: scale, y: scale });
-      }
-
-      this.layer.batchDraw();
-    }
-  };
-
   private handlePaste = (e: ClipboardEvent): void => {
     if (this.readOnly) return;
 
@@ -253,17 +205,7 @@ export class EventManager extends BaseModule {
     this.layer?.off('transformstart transform transformend');
 
     window.removeEventListener('keydown', this.handleKeyDown);
-    window.removeEventListener('resize', this.handleWindowResize);
     window.removeEventListener('paste', this.handlePaste);
-
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-      this.resizeObserver = null;
-    }
-  }
-
-  public triggerResize(): void {
-    this.handleContainerResize();
   }
 
   public updateEventListeners(): void {

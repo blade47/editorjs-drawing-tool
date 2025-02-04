@@ -8,6 +8,7 @@ import { TextEditor } from './modules/text-editor';
 import { ImageHandler } from './modules/image-handler';
 import { TransformerManager } from './modules/transformer-manager';
 import { GuidelineManager } from './modules/guideline-manager';
+import { ResponsiveStageManager } from './modules/responsive-stage-manager';
 
 import {
   ModuleOptions,
@@ -17,9 +18,10 @@ import {
   TextProperties,
 } from './types/types';
 import { DEFAULT_SETTINGS } from './constants';
-import { API, BlockToolConstructorOptions } from '@editorjs/editorjs';
+import { API, BlockTool, BlockToolConstructorOptions } from '@editorjs/editorjs';
+import { IconMarker } from '@codexteam/icons';
 
-export class DrawingTool {
+export class DrawingTool implements BlockTool {
   private api: API;
   private wrapper: HTMLDivElement;
   private container: HTMLDivElement;
@@ -32,6 +34,7 @@ export class DrawingTool {
   private imageHandler: ImageHandler | null = null;
   private transformerManager: TransformerManager | null = null;
   private guidelineManager: GuidelineManager | null = null;
+  private responsiveStageManager: ResponsiveStageManager | null = null;
 
   private selectedNode: Konva.Node | null = null;
   private isDirty: boolean = false;
@@ -47,7 +50,7 @@ export class DrawingTool {
   static get toolbox() {
     return {
       title: 'Drawing',
-      icon: '<svg>...</svg>',
+      icon: IconMarker,
     };
   }
 
@@ -206,13 +209,15 @@ export class DrawingTool {
     this.transformerManager = new TransformerManager(moduleOptions, callbacks);
     this.guidelineManager = new GuidelineManager(moduleOptions, callbacks);
 
+    this.responsiveStageManager = new ResponsiveStageManager(moduleOptions, callbacks);
+    this.responsiveStageManager.setCanvasHeight(this.data.canvasHeight);
+
     if (!this.readOnly) {
       this.wrapper.insertBefore(this.toolbarManager.createMainToolbar(), this.container);
       this.wrapper.insertBefore(this.toolbarManager.createTextToolbar(), this.container);
     }
   }
 
-  // Canvas Management Methods
   private loadCanvas(data: KonvaDrawingToolData): void {
     try {
       if (!this.layer) return;
@@ -376,8 +381,7 @@ export class DrawingTool {
     if (!this.stage || !this.container) return;
 
     try {
-      this.container.style.height = `${height}px`;
-      this.stage.height(height);
+      this.responsiveStageManager?.setCanvasHeight(height);
       this.data.canvasHeight = height;
 
       this.setDirty(true);
@@ -430,6 +434,7 @@ export class DrawingTool {
       this.transformerManager?.destroy();
       this.textEditor?.destroy();
       this.imageHandler?.destroy();
+      this.responsiveStageManager?.destroy();
 
       this.layer?.destroy();
       this.stage?.destroy();
