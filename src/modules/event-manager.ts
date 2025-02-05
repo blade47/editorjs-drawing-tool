@@ -12,18 +12,23 @@ export class EventManager extends BaseModule {
   private initializeEvents(): void {
     if (!this.stage || !this.layer) return;
 
-    this.attachStageEvents();
-    this.attachLayerEvents();
-    this.attachWindowEvents();
+    if (!this.readOnly) {
+      this.attachStageEvents();
+      this.attachLayerEvents();
+      this.attachWindowEvents();
+    } else {
+      this.stage.listening(false);
+      this.layer.listening(false);
+    }
   }
 
   private attachStageEvents(): void {
+    if (this.readOnly) return;
+
     this.stage.on(
       `click.${this.blockId} tap.${this.blockId}`,
       (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-        if (!this.isNodeInCurrentEditor(e.target)) {
-          return;
-        }
+        if (this.readOnly || !this.isNodeInCurrentEditor(e.target)) return;
 
         if (e.target === this.stage) {
           this.handleStageClick();
@@ -35,7 +40,7 @@ export class EventManager extends BaseModule {
     );
 
     this.stage.on('mouseover touchstart', (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-      if (!this.isNodeInCurrentEditor(e.target)) return;
+      if (this.readOnly || !this.isNodeInCurrentEditor(e.target)) return;
       document.body.style.cursor = 'pointer';
     });
 
@@ -76,17 +81,17 @@ export class EventManager extends BaseModule {
     });
 
     this.layer.on('transformstart', (e: Konva.KonvaEventObject<Event>) => {
-      if (!this.isNodeInCurrentEditor(e.target)) return;
+      if (this.readOnly || !this.isNodeInCurrentEditor(e.target)) return;
       this.callbacks.onTransformStart?.(e.target);
     });
 
     this.layer.on('transform', (e: Konva.KonvaEventObject<Event>) => {
-      if (!this.isNodeInCurrentEditor(e.target)) return;
+      if (this.readOnly || !this.isNodeInCurrentEditor(e.target)) return;
       this.callbacks.onChange?.();
     });
 
     this.layer.on('transformend', (e: Konva.KonvaEventObject<Event>) => {
-      if (!this.isNodeInCurrentEditor(e.target)) return;
+      if (this.readOnly || !this.isNodeInCurrentEditor(e.target)) return;
       this.callbacks.onTransformEnd?.(e.target);
     });
   }

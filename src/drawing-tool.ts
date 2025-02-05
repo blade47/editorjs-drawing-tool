@@ -23,8 +23,8 @@ import { IconMarker } from '@codexteam/icons';
 
 export class DrawingTool implements BlockTool {
   private api: API;
-  private wrapper: HTMLDivElement;
-  private container: HTMLDivElement;
+  private readonly wrapper: HTMLDivElement;
+  private readonly container: HTMLDivElement;
   private stage: Konva.Stage | null = null;
   private layer: Konva.Layer | null = null;
 
