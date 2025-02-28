@@ -2,20 +2,16 @@ import Konva from 'konva';
 import { BaseModule } from './base-module';
 import { DEFAULT_SETTINGS } from '../constants';
 import { EventCallbacks, ImageDimensions, ModuleOptions } from '../types/types';
-import { Notifier } from '@editorjs/editorjs/types/api';
 
 export class ImageHandler extends BaseModule {
-  private readonly notifier: Notifier;
   private readonly imageUploader?: (f: string) => Promise<string>;
 
   constructor(
     options: ModuleOptions,
     callbacks: EventCallbacks = {},
-    notifier: Notifier,
     imageUploader?: (f: string) => Promise<string>
   ) {
     super(options, callbacks);
-    this.notifier = notifier;
     this.imageUploader = imageUploader;
   }
 
@@ -27,11 +23,17 @@ export class ImageHandler extends BaseModule {
 
     if (!file || !file.type.startsWith('image/')) {
       console.warn('Invalid file type');
-      return;
+      this.uploadingFailed('Invalid file type');
     }
+
+    this.callbacks.onShowLoading?.();
 
     const reader = new FileReader();
     reader.onload = (e: ProgressEvent<FileReader>) => this.handleImageLoad(e);
+    reader.onerror = () => {
+      console.error('Error reading file');
+      this.callbacks?.onHideLoading?.();
+    };
     reader.readAsDataURL(file);
 
     // Reset input
@@ -40,7 +42,10 @@ export class ImageHandler extends BaseModule {
 
   private handleImageLoad(e: ProgressEvent<FileReader>): void {
     const result = e.target?.result;
-    if (!result || typeof result !== 'string') return;
+    if (!result || typeof result !== 'string') {
+      this.callbacks?.onHideLoading?.();
+      return;
+    }
 
     const handleUpload = async () => {
       if (this.imageUploader) {
@@ -53,12 +58,20 @@ export class ImageHandler extends BaseModule {
     handleUpload()
       .then((uploadedUrl) => {
         const img = new Image();
-        img.onload = () => this.createKonvaImage(img);
+        img.onload = () => {
+          this.createKonvaImage(img);
+          this.callbacks?.onHideLoading?.();
+        };
+        img.onerror = () => {
+          console.error('Failed to load image');
+          this.callbacks?.onHideLoading?.();
+        };
         img.src = uploadedUrl;
       })
       .catch((error) => {
         console.error('Error uploading image:', error);
         this.uploadingFailed(error);
+        this.callbacks?.onHideLoading?.();
       });
   }
 

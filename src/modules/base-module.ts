@@ -1,6 +1,7 @@
 import Konva from 'konva';
 import { ModuleOptions, EventCallbacks, TextProperties } from '../types/types';
 import { DEFAULT_SETTINGS } from '../constants';
+import { Notifier } from '@editorjs/editorjs/types/api';
 
 export abstract class BaseModule {
   protected stage: Konva.Stage;
@@ -9,13 +10,15 @@ export abstract class BaseModule {
   protected readOnly: boolean;
   protected onDirty: () => void;
   protected callbacks: EventCallbacks;
+  protected notifier: Notifier;
 
-  constructor(options: ModuleOptions, callbacks: EventCallbacks = {}) {
+  protected constructor(options: ModuleOptions, callbacks: EventCallbacks = {}) {
     this.stage = options.stage;
     this.layer = options.layer;
     this.blockId = options.blockId;
     this.readOnly = options.readOnly;
     this.onDirty = options.onDirty;
+    this.notifier = options.notifier;
     this.callbacks = callbacks;
   }
 

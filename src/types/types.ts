@@ -1,4 +1,5 @@
 import Konva from 'konva';
+import { Notifier } from '@editorjs/editorjs/types/api';
 
 export interface KonvaDrawingToolData {
   canvasJson: string | null;
@@ -34,6 +35,7 @@ export interface ModuleOptions {
   readOnly: boolean;
   onDirty: () => void;
   config?: ModuleConfig;
+  notifier: Notifier;
 }
 
 export interface ModuleConfig {
@@ -74,6 +76,9 @@ export interface EventCallbacks {
 
   onGuidelineShow?: () => void;
   onGuidelineHide?: () => void;
+
+  onShowLoading?: () => void;
+  onHideLoading?: () => void;
 }
 
 export interface TextProperties {

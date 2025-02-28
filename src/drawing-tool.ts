@@ -52,6 +52,8 @@ export class DrawingTool implements BlockTool {
   private data: KonvaDrawingToolData;
   private config: KonvaDrawingToolConfig;
 
+  private loadingOverlay: HTMLDivElement | null = null;
+
   private readonly debouncedAutoSave: () => void;
   private readonly AUTO_SAVE_DELAY = 2000;
 
@@ -146,6 +148,7 @@ export class DrawingTool implements BlockTool {
       blockId: this.blockId,
       readOnly: this.readOnly,
       onDirty: () => this.setDirty(true),
+      notifier: this.api.notifier,
     };
 
     const callbacks: EventCallbacks = {
@@ -209,6 +212,8 @@ export class DrawingTool implements BlockTool {
         this.setDirty(true);
         this.debouncedAutoSave();
       },
+      onShowLoading: () => this.showLoading(),
+      onHideLoading: () => this.hideLoading(),
     };
 
     this.toolbarManager = new ToolbarManager(moduleOptions, callbacks);
@@ -217,7 +222,6 @@ export class DrawingTool implements BlockTool {
     this.imageHandler = new ImageHandler(
       moduleOptions,
       callbacks,
-      this.api.notifier,
       this.config?.uploader?.uploadImage
     );
     this.transformerManager = new TransformerManager(moduleOptions, callbacks);
@@ -232,10 +236,71 @@ export class DrawingTool implements BlockTool {
     }
   }
 
+  private createLoadingOverlay(): HTMLDivElement {
+    const overlay = document.createElement('div');
+    overlay.classList.add('konva-editor-loading');
+    overlay.style.cssText = `
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  `;
+
+    const spinner = document.createElement('div');
+    spinner.classList.add('konva-editor-spinner');
+    spinner.style.cssText = `
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: konva-editor-spin 2s linear infinite;
+  `;
+
+    const style = document.createElement('style');
+    style.textContent = `
+    @keyframes konva-editor-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
+    document.head.appendChild(style);
+
+    overlay.appendChild(spinner);
+    return overlay;
+  }
+
+  private showLoading(): void {
+    if (!this.loadingOverlay) {
+      this.loadingOverlay = this.createLoadingOverlay();
+      this.wrapper.appendChild(this.loadingOverlay);
+      void this.loadingOverlay.offsetWidth;
+    }
+    this.loadingOverlay.style.opacity = '1';
+    this.loadingOverlay.style.pointerEvents = 'auto';
+  }
+
+  private hideLoading(): void {
+    if (this.loadingOverlay) {
+      this.loadingOverlay.style.opacity = '0';
+      this.loadingOverlay.style.pointerEvents = 'none';
+    }
+  }
+
   private loadCanvas(data: KonvaDrawingToolData): void {
     try {
       if (!this.layer) return;
 
+      this.showLoading();
       this.layer.destroyChildren();
 
       if (data.canvasJson) {
@@ -272,13 +337,16 @@ export class DrawingTool implements BlockTool {
               }
             });
             this.layer?.batchDraw();
+            this.hideLoading();
           })
           .catch((error) => {
             console.error('Error loading images:', error);
+            this.hideLoading();
           });
       }
     } catch (error) {
       console.error('Error loading canvas:', error);
+      this.hideLoading();
     }
   }
 
