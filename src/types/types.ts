@@ -6,6 +6,12 @@ export interface KonvaDrawingToolData {
   canvasHeight: number;
 }
 
+export interface KonvaDrawingToolConfig {
+  uploader?: {
+    uploadImage?: (base64Image: string) => Promise<string>;
+  };
+}
+
 export interface ImageData {
   id: string;
   src: string;

@@ -10,7 +10,4 @@ export type {
   AlignmentOption,
 } from './types/types';
 
-export default {
-  class: DrawingTool,
-  isInline: false,
-};
+export default DrawingTool;

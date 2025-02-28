@@ -16,10 +16,16 @@ import {
   KonvaDrawingToolData,
   ImageData,
   TextProperties,
+  KonvaDrawingToolConfig,
 } from './types/types';
 import { DEFAULT_SETTINGS } from './constants';
 import { API, BlockTool, BlockToolConstructorOptions } from '@editorjs/editorjs';
 import { IconMarker } from '@codexteam/icons';
+
+type DrawingToolConstructorOptions = BlockToolConstructorOptions<
+  KonvaDrawingToolData,
+  KonvaDrawingToolConfig
+>;
 
 export class DrawingTool implements BlockTool {
   private api: API;
@@ -42,10 +48,12 @@ export class DrawingTool implements BlockTool {
 
   private readonly blockId: string;
   private readonly readOnly: boolean;
+
   private data: KonvaDrawingToolData;
+  private config: KonvaDrawingToolConfig;
 
   private readonly debouncedAutoSave: () => void;
-  private readonly AUTO_SAVE_DELAY = 1000;
+  private readonly AUTO_SAVE_DELAY = 2000;
 
   static get toolbox() {
     return {
@@ -54,11 +62,12 @@ export class DrawingTool implements BlockTool {
     };
   }
 
-  constructor({ data, readOnly, block, api }: BlockToolConstructorOptions) {
+  constructor({ data, readOnly, block, api, config }: DrawingToolConstructorOptions) {
     this.api = api;
     this.blockId = block.id;
     this.readOnly = readOnly || false;
     this.data = this.initializeData(data);
+    this.config = config;
     this.wrapper = this.createWrapper();
     this.container = this.createContainer();
     this.wrapper.appendChild(this.container);
@@ -205,7 +214,12 @@ export class DrawingTool implements BlockTool {
     this.toolbarManager = new ToolbarManager(moduleOptions, callbacks);
     this.eventManager = new EventManager(moduleOptions, callbacks);
     this.textEditor = new TextEditor(moduleOptions, callbacks);
-    this.imageHandler = new ImageHandler(moduleOptions, callbacks);
+    this.imageHandler = new ImageHandler(
+      moduleOptions,
+      callbacks,
+      this.api.notifier,
+      this.config?.uploader?.uploadImage
+    );
     this.transformerManager = new TransformerManager(moduleOptions, callbacks);
     this.guidelineManager = new GuidelineManager(moduleOptions, callbacks);
 
@@ -272,36 +286,58 @@ export class DrawingTool implements BlockTool {
     if (!this.layer || !this.isDirty) {
       return this.data;
     }
-
     try {
       this.guidelineManager?.cleanupGuides();
-
       const canvasJson = this.layer.toJSON();
-
       const canvasImages: ImageData[] = [];
-      this.layer.find('Image').forEach((imageNode: Konva.Image) => {
+
+      const imageNodes = this.layer.find('Image');
+
+      if (imageNodes.length === 0) {
+        return this.handleSaveComplete(canvasJson, canvasImages);
+      }
+
+      imageNodes.forEach((imageNode: Konva.Image) => {
         const imageElement = imageNode.image() as HTMLImageElement;
+
         if (imageElement) {
-          canvasImages.push({
-            id: imageNode.id() || uuidv4(),
-            src: imageElement.src,
-            attrs: imageNode.attrs,
-          });
+          const handleUpload = async () => {
+            if (!imageElement.src.startsWith('http') && this.config?.uploader?.uploadImage) {
+              return await this.config.uploader.uploadImage(imageElement.src);
+            }
+            return imageElement.src;
+          };
+
+          handleUpload()
+            .then((imageUrl) => {
+              canvasImages.push({
+                id: imageNode.id() || uuidv4(),
+                src: imageUrl,
+                attrs: imageNode.attrs,
+              });
+            })
+            .catch((error) => {
+              console.error('Error uploading image:', error);
+              this.uploadingFailed('Failed to upload image');
+            })
+            .finally(() => {
+              this.handleSaveComplete(canvasJson, canvasImages);
+            });
         }
       });
-
-      this.data = {
-        ...this.data,
-        canvasJson,
-        canvasImages,
-      };
-
-      this.setDirty(false);
-      return this.data;
     } catch (error) {
       console.error('Error saving canvas:', error);
-      throw new Error('Failed to save canvas state');
     }
+  }
+
+  private handleSaveComplete(canvasJson: string, canvasImages: ImageData[]): KonvaDrawingToolData {
+    this.data = {
+      ...this.data,
+      canvasJson,
+      canvasImages,
+    };
+    this.setDirty(false);
+    return this.data;
   }
 
   private handleSelection(node: Konva.Node | null): void {
@@ -449,5 +485,14 @@ export class DrawingTool implements BlockTool {
     } catch (error) {
       console.error('Error destroying editor:', error);
     }
+  }
+
+  private uploadingFailed(errorText: string): void {
+    console.log('Drawing Tool: uploading image failed because of', errorText);
+
+    this.api.notifier.show({
+      message: this.api.i18n.t('Couldn’t upload image. Please try another.'),
+      style: 'error',
+    });
   }
 }

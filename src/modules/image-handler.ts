@@ -1,9 +1,24 @@
 import Konva from 'konva';
 import { BaseModule } from './base-module';
 import { DEFAULT_SETTINGS } from '../constants';
-import { ImageDimensions } from '../types/types';
+import { EventCallbacks, ImageDimensions, ModuleOptions } from '../types/types';
+import { Notifier } from '@editorjs/editorjs/types/api';
 
 export class ImageHandler extends BaseModule {
+  private readonly notifier: Notifier;
+  private readonly imageUploader?: (f: string) => Promise<string>;
+
+  constructor(
+    options: ModuleOptions,
+    callbacks: EventCallbacks = {},
+    notifier: Notifier,
+    imageUploader?: (f: string) => Promise<string>
+  ) {
+    super(options, callbacks);
+    this.notifier = notifier;
+    this.imageUploader = imageUploader;
+  }
+
   public handleImageUpload(event: Event): void {
     if (this.readOnly) return;
 
@@ -27,9 +42,24 @@ export class ImageHandler extends BaseModule {
     const result = e.target?.result;
     if (!result || typeof result !== 'string') return;
 
-    const img = new Image();
-    img.onload = () => this.createKonvaImage(img);
-    img.src = result;
+    const handleUpload = async () => {
+      if (this.imageUploader) {
+        return await this.imageUploader(result);
+      } else {
+        return result;
+      }
+    };
+
+    handleUpload()
+      .then((uploadedUrl) => {
+        const img = new Image();
+        img.onload = () => this.createKonvaImage(img);
+        img.src = uploadedUrl;
+      })
+      .catch((error) => {
+        console.error('Error uploading image:', error);
+        this.uploadingFailed(error);
+      });
   }
 
   public createKonvaImage(img: HTMLImageElement): void {
@@ -85,5 +115,14 @@ export class ImageHandler extends BaseModule {
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = 'high';
     }
+  }
+
+  private uploadingFailed(errorText: string): void {
+    console.log('Drawing Tool: uploading image failed because of', errorText);
+
+    this.notifier.show({
+      message: 'Couldn’t upload image. Please try another.',
+      style: 'Error',
+    });
   }
 }
