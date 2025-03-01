@@ -311,6 +311,8 @@ export class DrawingTool implements BlockTool {
       if (data.canvasJson) {
         const canvasData = JSON.parse(data.canvasJson);
 
+        if (data.canvasImages.length === 0) this.hideLoading();
+
         const imageLoadPromises = data.canvasImages.map((imageData) => {
           return new Promise<void>((resolve, reject) => {
             const img = new Image();
@@ -345,9 +347,13 @@ export class DrawingTool implements BlockTool {
           })
           .catch((error) => {
             console.error('Error loading images:', error);
+          })
+          .finally(() => {
+            this.hideLoading();
           });
+      } else {
+        this.hideLoading();
       }
-      this.hideLoading();
     } catch (error) {
       console.error('Error loading canvas:', error);
       this.hideLoading();
