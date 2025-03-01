@@ -89,7 +89,9 @@ export class DrawingTool implements BlockTool {
     return {
       canvasJson: data.canvasJson || null,
       canvasImages: Array.isArray(data.canvasImages) ? data.canvasImages : [],
-      canvasHeight: data.canvasHeight || DEFAULT_SETTINGS.CANVAS_HEIGHT_PX,
+      canvasHeight: data.canvasHeight
+        ? parseInt(data.canvasHeight.toString(), 10)
+        : DEFAULT_SETTINGS.CANVAS_HEIGHT_PX,
     };
   }
 
@@ -231,7 +233,10 @@ export class DrawingTool implements BlockTool {
     this.responsiveStageManager.setCanvasHeight(this.data.canvasHeight);
 
     if (!this.readOnly) {
-      this.wrapper.insertBefore(this.toolbarManager.createMainToolbar(), this.container);
+      this.wrapper.insertBefore(
+        this.toolbarManager.createMainToolbar(this.data.canvasHeight),
+        this.container
+      );
       this.wrapper.insertBefore(this.toolbarManager.createTextToolbar(), this.container);
     }
   }
@@ -337,13 +342,12 @@ export class DrawingTool implements BlockTool {
               }
             });
             this.layer?.batchDraw();
-            this.hideLoading();
           })
           .catch((error) => {
             console.error('Error loading images:', error);
-            this.hideLoading();
           });
       }
+      this.hideLoading();
     } catch (error) {
       console.error('Error loading canvas:', error);
       this.hideLoading();
@@ -386,13 +390,12 @@ export class DrawingTool implements BlockTool {
             })
             .catch((error) => {
               console.error('Error uploading image:', error);
-              this.uploadingFailed('Failed to upload image');
-            })
-            .finally(() => {
-              this.handleSaveComplete(canvasJson, canvasImages);
+              this.uploadingFailed();
             });
         }
       });
+
+      return this.handleSaveComplete(canvasJson, canvasImages);
     } catch (error) {
       console.error('Error saving canvas:', error);
     }
@@ -555,9 +558,7 @@ export class DrawingTool implements BlockTool {
     }
   }
 
-  private uploadingFailed(errorText: string): void {
-    console.log('Drawing Tool: uploading image failed because of', errorText);
-
+  private uploadingFailed(): void {
     this.api.notifier.show({
       message: this.api.i18n.t('Couldn’t upload image. Please try another.'),
       style: 'error',

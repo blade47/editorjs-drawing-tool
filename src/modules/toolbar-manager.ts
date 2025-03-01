@@ -104,7 +104,7 @@ export class ToolbarManager extends BaseModule {
     document.head.appendChild(style);
   }
 
-  public createMainToolbar(): HTMLDivElement {
+  public createMainToolbar(canvasHeight: number): HTMLDivElement {
     this.mainToolbar = document.createElement('div');
     this.mainToolbar.classList.add('konva-toolbar', 'konva-main-toolbar');
 
@@ -118,7 +118,7 @@ export class ToolbarManager extends BaseModule {
     leftSection.style.gap = '8px';
     leftSection.appendChild(toolsContainer);
     leftSection.appendChild(this.createSeparator());
-    leftSection.appendChild(this.createSizeSelector());
+    leftSection.appendChild(this.createSizeSelector(canvasHeight));
 
     const rightSection = document.createElement('div');
     rightSection.style.display = 'flex';
@@ -198,7 +198,7 @@ export class ToolbarManager extends BaseModule {
     return imageInput;
   }
 
-  private createSizeSelector(): HTMLSelectElement {
+  private createSizeSelector(canvasHeight: number): HTMLSelectElement {
     const select = document.createElement('select');
     select.classList.add('konva-size-selector');
 
@@ -206,7 +206,7 @@ export class ToolbarManager extends BaseModule {
       const option = document.createElement('option');
       option.value = size.value;
       option.text = size.label;
-      if (this.stage.height() === parseInt(size.value)) {
+      if (canvasHeight === parseInt(size.value)) {
         option.selected = true;
       }
       select.appendChild(option);

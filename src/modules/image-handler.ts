@@ -23,7 +23,7 @@ export class ImageHandler extends BaseModule {
 
     if (!file || !file.type.startsWith('image/')) {
       console.warn('Invalid file type');
-      this.uploadingFailed('Invalid file type');
+      this.uploadingFailed();
     }
 
     this.callbacks.onShowLoading?.();
@@ -70,7 +70,7 @@ export class ImageHandler extends BaseModule {
       })
       .catch((error) => {
         console.error('Error uploading image:', error);
-        this.uploadingFailed(error);
+        this.uploadingFailed();
         this.callbacks?.onHideLoading?.();
       });
   }
@@ -130,9 +130,7 @@ export class ImageHandler extends BaseModule {
     }
   }
 
-  private uploadingFailed(errorText: string): void {
-    console.log('Drawing Tool: uploading image failed because of', errorText);
-
+  private uploadingFailed(): void {
     this.notifier.show({
       message: 'Couldn’t upload image. Please try another.',
       style: 'Error',
