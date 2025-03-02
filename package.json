@@ -1,6 +1,6 @@
 {
   "name": "@blade47/editorjs-drawing-tool",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "keywords": [
     "codex editor",
     "drawing-tool",
@@ -37,22 +37,22 @@
     "install": "^0.13.0",
     "npm": "^11.1.0",
     "vite": "^4.5.0",
-    "vite-plugin-css-injected-by-js": "^3.3.0"
-  },
-  "dependencies": {
-    "@codexteam/icons": "^0.3.3",
-    "@editorjs/editorjs": "^2.30.8",
-    "@types/debounce": "^1.2.4",
-    "debounce": "^2.2.0",
+    "vite-plugin-css-injected-by-js": "^3.3.0",
     "eslint": "^8.44.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-perfectionist": "^2.11.0",
     "eslint-plugin-prettier": "^5.1.3",
     "eslint-plugin-unused-imports": "^4.0.0",
-    "konva": "^9.3.18",
-    "prettier": "^3.3.2",
     "typescript": "^5.7.3",
+    "prettier": "^3.3.2",
+    "@types/debounce": "^1.2.4"
+  },
+  "dependencies": {
+    "@codexteam/icons": "^0.3.3",
+    "@editorjs/editorjs": "^2.30.8",
+    "debounce": "^2.2.0",
+    "konva": "^9.3.18",
     "uuid": "^11.0.5"
   }
 }
