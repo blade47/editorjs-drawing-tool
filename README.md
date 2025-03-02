@@ -2,7 +2,9 @@
 
 **Drawing Tool Block** for the [Editor.js](https://editorjs.io).
 
-![Demo](demo.gif)
+
+https://github.com/user-attachments/assets/e19af1f4-e933-4118-8a9c-0202bf3fb020
+
 
 ---
 
