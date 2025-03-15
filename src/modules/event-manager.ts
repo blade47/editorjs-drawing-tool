@@ -12,40 +12,43 @@ export class EventManager extends BaseModule {
   private initializeEvents(): void {
     if (!this.stage || !this.layer) return;
 
+    this.attachBasicEvents();
+
     if (!this.readOnly) {
-      this.attachStageEvents();
-      this.attachLayerEvents();
+      this.attachEditingEvents();
       this.attachWindowEvents();
-    } else {
-      this.stage.listening(false);
-      this.layer.listening(false);
     }
   }
 
-  private attachStageEvents(): void {
-    if (this.readOnly) return;
-
+  private attachBasicEvents(): void {
     this.stage.on(
       `click.${this.blockId} tap.${this.blockId}`,
       (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-        if (this.readOnly || !this.isNodeInCurrentEditor(e.target)) return;
+        if (!this.isNodeInCurrentEditor(e.target)) return;
 
         if (e.target === this.stage) {
-          this.handleStageClick();
+          if (!this.readOnly) {
+            this.handleStageClick();
+          }
           return;
         }
 
-        this.handleNodeClick(e.target);
+        if (!this.readOnly || (e.target instanceof Konva.Text && e.target.getAttr('link'))) {
+          this.handleNodeClick(e.target);
+        }
       }
     );
 
     this.stage.on('mouseover touchstart', (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
-      if (this.readOnly || !this.isNodeInCurrentEditor(e.target)) return;
-      document.body.style.cursor = 'pointer';
+      if (!this.isNodeInCurrentEditor(e.target)) return;
+
+      if (!this.readOnly || (e.target instanceof Konva.Text && e.target.getAttr('link'))) {
+        this.stage.container().style.cursor = 'pointer';
+      }
     });
 
     this.stage.on('mouseout touchend', () => {
-      document.body.style.cursor = 'default';
+      this.stage.container().style.cursor = 'default';
     });
 
     this.stage.on('contextmenu', (e: Konva.KonvaEventObject<MouseEvent>) => {
@@ -53,8 +56,8 @@ export class EventManager extends BaseModule {
     });
   }
 
-  private attachLayerEvents(): void {
-    if (!this.layer) return;
+  private attachEditingEvents(): void {
+    if (this.readOnly || !this.layer) return;
 
     this.layer.on('dragstart', (e: Konva.KonvaEventObject<DragEvent>) => {
       if (this.readOnly || !this.isNodeInCurrentEditor(e.target)) {
@@ -106,11 +109,27 @@ export class EventManager extends BaseModule {
   }
 
   private handleNodeClick(node: Konva.Node): void {
-    if (this.readOnly) return;
+    if (this.readOnly && !(node instanceof Konva.Text && node.getAttr('link'))) return;
 
     if (node.hasName('guid-line')) return;
 
-    this.callbacks.onSelect?.(node);
+    if (
+      node instanceof Konva.Text &&
+      node.getAttr('link') &&
+      (this.readOnly ||
+        (window.event && (window.event as MouseEvent).ctrlKey) ||
+        (window.event && (window.event as MouseEvent).metaKey))
+    ) {
+      const link = node.getAttr('link');
+      if (link) {
+        window.open(link, '_blank', 'noopener,noreferrer');
+        return;
+      }
+    }
+
+    if (!this.readOnly) {
+      this.callbacks.onSelect?.(node);
+    }
   }
 
   private handleKeyDown = (e: KeyboardEvent): void => {

@@ -77,12 +77,12 @@ export class TextEditor extends BaseModule {
 
     textNode.on('mouseover', () => {
       if (textNode.getAttr('link')) {
-        document.body.style.cursor = 'pointer';
+        this.stage.container().style.cursor = 'pointer';
       }
     });
 
     textNode.on('mouseout', () => {
-      document.body.style.cursor = 'default';
+      this.stage.container().style.cursor = 'default';
     });
   }
 

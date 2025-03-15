@@ -12,6 +12,7 @@ https://github.com/user-attachments/assets/e19af1f4-e933-4118-8a9c-0202bf3fb020
 
 - **Image Uploading**: Upload images directly from the user's device.
 - **Text Customization**: Control text properties like color, size, alignment, and style.
+- **Linking**: Add hyperlinks to text.
 - **Image Saving**: Supports saving images as base64-encoded strings or remotely via a custom uploader.
 - **Configurable Height**: Customize the height of the drawing tool's canvas.
 
