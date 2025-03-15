@@ -337,7 +337,8 @@ export class DrawingTool implements BlockTool {
               if (nodeData.className !== 'Image') {
                 const node = Konva.Node.create(nodeData);
                 if (node instanceof Konva.Text) {
-                  this.textEditor.attachDoubleClickHandler(node);
+                  this.textEditor?.attachDoubleClickHandler(node);
+                  this.textEditor?.attachClickHandler(node);
                 }
                 node.draggable(!this.readOnly);
                 this.layer?.add(node);

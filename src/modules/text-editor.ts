@@ -21,6 +21,7 @@ export class TextEditor extends BaseModule {
     });
 
     this.attachDoubleClickHandler(text);
+    this.attachClickHandler(text);
 
     this.layer.add(text);
     this.callbacks.onSelect?.(text);
@@ -36,11 +37,21 @@ export class TextEditor extends BaseModule {
       existingTextarea.parentNode?.removeChild(existingTextarea);
     }
 
+    const linkUrl = textNode.getAttr('link');
+
     textNode.hide();
     this.callbacks.onHideTransformer?.();
 
     const textarea = this.createTextarea(textNode);
-    this.setupTextareaEvents(textarea, textNode);
+    this.setupTextareaEvents(textarea, textNode, {
+      onFinish: () => {
+        if (linkUrl) {
+          textNode.setAttr('link', linkUrl);
+          textNode.setAttr('textDecoration', DEFAULT_SETTINGS.LINK_TEXT_DECORATION);
+          textNode.fill(DEFAULT_SETTINGS.LINK_COLOR);
+        }
+      },
+    });
   }
 
   public attachDoubleClickHandler(textNode: Konva.Text): void {
@@ -48,6 +59,30 @@ export class TextEditor extends BaseModule {
 
     textNode.on('dblclick dbltap', () => {
       this.createTextEditor(textNode);
+    });
+  }
+
+  public attachClickHandler(textNode: Konva.Text): void {
+    textNode.off('click tap');
+
+    textNode.on('click tap', (e) => {
+      const link = textNode.getAttr('link');
+      if (link && (this.readOnly || e.evt.ctrlKey || e.evt.metaKey)) {
+        window.open(link, '_blank', 'noopener,noreferrer');
+        e.cancelBubble = true;
+      }
+    });
+
+    textNode.off('mouseover mouseout');
+
+    textNode.on('mouseover', () => {
+      if (textNode.getAttr('link')) {
+        document.body.style.cursor = 'pointer';
+      }
+    });
+
+    textNode.on('mouseout', () => {
+      document.body.style.cursor = 'default';
     });
   }
 
@@ -124,7 +159,11 @@ export class TextEditor extends BaseModule {
     textarea.style.height = `${textarea.scrollHeight + 3}px`;
   }
 
-  private setupTextareaEvents(textarea: HTMLTextAreaElement, textNode: Konva.Text): void {
+  private setupTextareaEvents(
+    textarea: HTMLTextAreaElement,
+    textNode: Konva.Text,
+    options: { onFinish?: () => void } = {}
+  ): void {
     const removeTextarea = () => {
       textarea.parentNode?.removeChild(textarea);
       window.removeEventListener('click', handleOutsideClick);
@@ -132,8 +171,13 @@ export class TextEditor extends BaseModule {
       this.callbacks.onShowTransformer?.();
 
       this.attachDoubleClickHandler(textNode);
+      this.attachClickHandler(textNode);
 
       this.safeDraw();
+
+      if (options.onFinish) {
+        options.onFinish();
+      }
 
       this.callbacks.onTransformEnd?.(textNode);
     };
@@ -190,6 +234,24 @@ export class TextEditor extends BaseModule {
 
   public updateTextProperties(node: Konva.Node, props: Partial<TextProperties>): void {
     if (node instanceof Konva.Text) {
+      if (props.link !== undefined) {
+        if (props.link) {
+          if (!node.getAttr('originalFill')) {
+            node.setAttr('originalFill', node.fill());
+          }
+          props.fill = DEFAULT_SETTINGS.LINK_COLOR;
+          props.textDecoration = DEFAULT_SETTINGS.LINK_TEXT_DECORATION;
+        } else {
+          props.fill = node.getAttr('originalFill') || DEFAULT_SETTINGS.TEXT_COLOR;
+          props.textDecoration = undefined;
+          node.setAttr('originalFill', undefined);
+        }
+      }
+
+      if (props.fill && node.getAttr('link') && props.link === undefined) {
+        delete props.fill;
+      }
+
       node.setAttrs({ ...node.getAttrs(), ...props });
       this.safeDraw();
       this.onDirty();

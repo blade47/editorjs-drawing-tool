@@ -98,6 +98,9 @@ export interface TextProperties {
   x?: number;
   y?: number;
   rotation?: number;
+  link?: string;
+  textDecoration?: string;
+  originalFill?: string;
   [key: string]: unknown;
 }
 

@@ -15,6 +15,8 @@ export const DEFAULT_SETTINGS = {
   IMAGE_SCALE_FACTOR: 0.8,
   GUIDELINE_OFFSET: 5,
   AUTO_SAVE_DELAY: 1000,
+  LINK_COLOR: '#0066cc',
+  LINK_TEXT_DECORATION: 'underline',
 } as const;
 
 export const KEYS = {
