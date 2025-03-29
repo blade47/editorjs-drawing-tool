@@ -25,7 +25,7 @@ https://github.com/user-attachments/assets/e19af1f4-e933-4118-8a9c-0202bf3fb020
 Install the Drawing Tool package via Yarn:
 
 ```bash
-yarn add @blade47/drawing-tool
+yarn add @blade47/editorjs-drawing-tool
 ```
 
 ### Import the Module
@@ -33,7 +33,7 @@ yarn add @blade47/drawing-tool
 To use the tool in your project, include it as:
 
 ```javascript
-import DrawingTool from '@blade47/drawing-tool';
+import DrawingTool from '@blade47/editorjs-drawing-tool';
 ```
 
 ---
